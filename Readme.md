@@ -45,16 +45,6 @@ See `.env.example` for the full list. You'll need:
 - **Ride acceptance uses a single atomic `findOneAndUpdate`** with the current status included in the _query_, not just the update — this is what actually prevents two drivers from accepting the same ride, without needing manual locking.
 - **No driver verification gate.** Any account can switch to driving instantly. This mirrors real platforms' _lack_ of this exact simplification deliberately — Uber and similar apps require document verification before driving, which is out of scope for this MVP and explicitly deferred, not overlooked.
 
-## Testing
-
-`test-api.js` is a standalone smoke-test script (not a full test suite) that runs against a live local server:
-
-```bash
-node test-api.js
-```
-
-It creates fresh timestamped test accounts each run and walks through validation, auth, phone management, ride creation, driver matching, and the accept-conflict race condition. Two flows (OTP verification, password reset) require a real emailed code and are flagged for manual confirmation rather than fully automated.
-
 ## Known limitations (documented, not accidental)
 
 - JWTs are not server-side revocable — logout clears the client's cookie but a copied raw token remains valid until natural expiry (no blacklist implemented).
