@@ -19,3 +19,7 @@ export const updateDriverStatusSchema = z.object({
   isOnline: z.boolean(),
   coordinates: coordinatesSchema.optional(),
 });
+
+export const rideIdParamSchema = z.object({
+  id: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ride ID"),
+});

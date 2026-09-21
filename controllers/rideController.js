@@ -1,6 +1,7 @@
 import Ride from "../models/Ride.js";
 import User from "../models/User.js";
 import { getRoute } from "../lib/osrm.js";
+import { isValidTransition } from "../lib/rideStateMachine.js";
 
 const PLATFORM_FEE = 50;
 const FUEL_PRICE_PER_LITER = 280; // update manually as real prices change
@@ -50,6 +51,69 @@ export const createRide = async (req, res) => {
     });
 
     res.status(201).json({ ride, usedFallback }); // usedFallback flagged for debugging visibility, not shown to rider
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+async function transitionRide(
+  req,
+  res,
+  { to, requiredCurrentField, actorField },
+) {
+  const { id } = req.params;
+  const ride = await Ride.findById(id);
+
+  if (!ride) return res.status(404).json({ error: "Ride not found" });
+  if (ride[actorField]?.toString() !== req.user.userId) {
+    return res.status(403).json({ error: "Not authorized for this ride" });
+  }
+  if (!isValidTransition(ride.status, to)) {
+    return res
+      .status(409)
+      .json({ error: `Cannot move ride from ${ride.status} to ${to}` });
+  }
+
+  ride.status = to;
+  await ride.save();
+  res.status(200).json({ ride });
+}
+
+export const arriveRide = (req, res) =>
+  transitionRide(req, res, { to: "arrived", actorField: "driverId" }).catch(
+    (err) => res.status(500).json({ error: err.message }),
+  );
+
+export const startRide = (req, res) =>
+  transitionRide(req, res, { to: "in_progress", actorField: "driverId" }).catch(
+    (err) => res.status(500).json({ error: err.message }),
+  );
+
+export const completeRide = (req, res) =>
+  transitionRide(req, res, { to: "completed", actorField: "driverId" }).catch(
+    (err) => res.status(500).json({ error: err.message }),
+  );
+
+export const cancelRide = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const ride = await Ride.findById(id);
+
+    if (!ride) return res.status(404).json({ error: "Ride not found" });
+
+    const isRider = ride.riderId.toString() === req.user.userId;
+    const isDriver = ride.driverId?.toString() === req.user.userId;
+    if (!isRider && !isDriver) {
+      return res.status(403).json({ error: "Not authorized for this ride" });
+    }
+    if (!isValidTransition(ride.status, "cancelled")) {
+      return res
+        .status(409)
+        .json({ error: `Cannot cancel a ride that is ${ride.status}` });
+    }
+
+    ride.status = "cancelled";
+    await ride.save();
+    res.status(200).json({ ride });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
