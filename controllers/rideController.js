@@ -118,3 +118,35 @@ export const cancelRide = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const getRideById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const ride = await Ride.findById(id)
+      .populate("riderId", "name phone")
+      .populate("driverId", "name");
+
+    if (!ride) return res.status(404).json({ error: "Ride not found" });
+
+    const userId = req.user.userId;
+    const isRider = ride.riderId?._id.toString() === userId;
+    const isDriver = ride.driverId?._id.toString() === userId;
+
+    if (!isRider && !isDriver) {
+      return res.status(404).json({ error: "Ride not found" });
+    }
+
+    const rideObj = ride.toObject();
+
+    // Phone privacy: rider's phone is visible to the driver only
+    // while the ride is active — stripped otherwise, server-side.
+    const ACTIVE_STATUSES = ["accepted", "arrived", "in_progress"];
+    if (!isDriver || !ACTIVE_STATUSES.includes(ride.status)) {
+      if (rideObj.riderId) delete rideObj.riderId.phone;
+    }
+
+    res.status(200).json({ ride: rideObj });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

@@ -10,6 +10,7 @@ import {
   startRide,
   completeRide,
   cancelRide,
+  getRideById,
 } from "../controllers/rideController.js";
 import { rideIdParamSchema } from "../schemas/rideschemas.js";
 import { validateParams } from "../lib/validate.js";
@@ -53,5 +54,7 @@ router.patch(
   validateParams(rideIdParamSchema),
   cancelRide,
 );
+router.get("/nearby", requireAuth, requireRole("driver"), getNearbyRides);
+router.get("/:id", requireAuth, validateParams(rideIdParamSchema), getRideById);
 
 export default router;
