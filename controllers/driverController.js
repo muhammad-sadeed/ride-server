@@ -1,10 +1,43 @@
 import User from "../models/User.js";
 import Ride from "../models/Ride.js";
 
+export const updateVehicleInfo = async (req, res) => {
+  try {
+    const { vehicleModel, vehicleNumber, vehicleColor } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.user.userId,
+      { vehicleModel, vehicleNumber, vehicleColor },
+      { new: true },
+    );
+    res.status(200).json({
+      vehicleModel: user.vehicleModel,
+      vehicleNumber: user.vehicleNumber,
+      vehicleColor: user.vehicleColor,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 export const updateDriverStatus = async (req, res) => {
   try {
-    // Shape/type validation now handled by updateDriverStatusSchema + validate() middleware
     const { isOnline, coordinates } = req.body;
+
+    if (isOnline) {
+      const driver = await User.findById(req.user.userId);
+      if (
+        !driver.vehicleModel ||
+        !driver.vehicleNumber ||
+        !driver.vehicleColor
+      ) {
+        return res
+          .status(400)
+          .json({
+            error:
+              "Add your bike's model, number and color before going online",
+          });
+      }
+    }
 
     const update = { isOnline };
     if (coordinates) {

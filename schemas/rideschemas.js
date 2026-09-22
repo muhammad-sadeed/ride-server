@@ -23,3 +23,9 @@ export const updateDriverStatusSchema = z.object({
 export const rideIdParamSchema = z.object({
   id: z.string().regex(/^[0-9a-fA-F]{24}$/, "Invalid ride ID"),
 });
+
+export const vehicleInfoSchema = z.object({
+  vehicleModel: z.string().trim().min(1, "Vehicle model is required"),
+  vehicleNumber: z.string().trim().min(1, "Vehicle number is required"),
+  vehicleColor: z.string().trim().min(1, "Vehicle color is required"),
+});

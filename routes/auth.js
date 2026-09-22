@@ -15,7 +15,10 @@ import {
 } from "../controllers/authController.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { requireRole } from "../middleware/requireRole.js";
-import { updateDriverStatus } from "../controllers/driverController.js";
+import {
+  updateDriverStatus,
+  updateVehicleInfo,
+} from "../controllers/driverController.js";
 import { validate } from "../lib/validate.js";
 import {
   signupSchema,
@@ -27,7 +30,10 @@ import {
   updatePhoneSchema,
   switchRoleSchema,
 } from "../schemas/authschemas.js";
-import { updateDriverStatusSchema } from "../schemas/rideschemas.js";
+import {
+  updateDriverStatusSchema,
+  vehicleInfoSchema,
+} from "../schemas/rideschemas.js";
 
 const router = express.Router();
 
@@ -79,6 +85,13 @@ router.patch(
   requireRole("driver"),
   validate(updateDriverStatusSchema),
   updateDriverStatus,
+);
+router.patch(
+  "/vehicle",
+  requireAuth,
+  requireRole("driver"),
+  validate(vehicleInfoSchema),
+  updateVehicleInfo,
 );
 
 export default router;

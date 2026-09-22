@@ -124,7 +124,7 @@ export const getRideById = async (req, res) => {
     const { id } = req.params;
     const ride = await Ride.findById(id)
       .populate("riderId", "name phone")
-      .populate("driverId", "name");
+      .populate("driverId", "name vehicleModel vehicleNumber vehicleColor");
 
     if (!ride) return res.status(404).json({ error: "Ride not found" });
 
